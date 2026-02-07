@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>影视软件合集</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4e6ef2;--primary-hover: #3a5bd9;--secondary: #722ed1;
+      --tag-color: #4e6ef2;--tag-bg: #e8f0fe;--white: #fff;--gray-light: #f0f2f5;
+      --gray: #999;--gray-dark: #333;--date-color: #8c8c8c;
+      --highlight-color: #fff3cd;--highlight-border: #ffeeba;--highlight-text: #856404;
+      --logo-size: 70px;--logo-size-mobile: 50px;--banner-height: 100px;--banner-height-mobile: 70px;
+      /* 核心缩小：卡片尺寸从180/140改为120/100，大幅减少占用 */
+      --card-size: 120px;--card-size-mobile: 100px;
+      --card-shadow: 0 2px 5px rgba(0,0,0,0.1);--card-shadow-hover: 0 5px 15px rgba(78, 110, 242, 0.2);
+      --common-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --animate-fast: 0.2s;--animate-normal: 0.3s;--animate-slow: 0.5s;
+      /* 间距同步缩小，适配紧凑布局 */
+      --gap-xs: 0.15rem;--gap-sm: 0.25rem;--gap-md: 0.3rem;--gap-lg: 0.6rem;
+    }
+    * { margin: 0;padding: 0;box-sizing: border-box;font-family: 'Helvetica Neue', Arial, sans-serif; }
+    body { position: relative;min-height: 100vh;color: var(--gray-dark);padding: var(--gap-lg) 0;
+      background: linear-gradient(120deg, #e0f7fa, #f3e5f5, #e8f4f8);background-size: 200% 200%;
+      animation: bgFlow 15s ease infinite;overflow-x: hidden; }
+    .container { width: 90%;max-width: 600px;margin: 0 auto;position: relative;z-index: 1;display: flex;flex-direction: column;gap: var(--gap-lg); }
+    @keyframes bgFlow { 0% { background-position: 0% 50%; }50% { background-position: 100% 50%; }100% { background-position: 0% 50%; } }
+    .bg-ball { position: fixed;border-radius: 50%;filter: blur(40px);opacity: 0.3;z-index: -1;animation: ballFloat 8s ease-in-out infinite; }
+    .ball1 { width: 300px;height: 300px;background: var(--primary);top: -100px;right: -100px; }
+    .ball2 { width: 250px;height: 250px;background: var(--secondary);bottom: -80px;left: -80px;animation-delay: 2s; }
+    @keyframes ballFloat { 0%,100% { transform: translateY(0); }50% { transform: translateY(-20px); } }
+    
+    .logo-container { text-align: center; }
+    .logo-img { width: var(--logo-size);height: var(--logo-size);object-fit: contain;border-radius: 50%;background: var(--white);padding: var(--gap-md);box-shadow: var(--common-shadow);transition: transform var(--animate-normal) ease; }
+    .logo-img:hover { transform: rotate(5deg) scale(1.05); }
+    .share-header { text-align: center;line-height: 1.2; }
+    .share-header h1 { font-size: 1.2rem;color: var(--primary);margin-bottom: var(--gap-xs); }
+    .share-header p { font-size: 0.7rem;color: var(--gray); }
+    
+    .banner-slider { width: 100%;height: var(--banner-height);border-radius: 6px;overflow: hidden;box-shadow: var(--common-shadow);position: relative; }
+    .banner-list { width: 100%;height: 100%;display: flex;transition: transform var(--animate-slow) ease; }
+    .banner-item { flex: 1 0 100%;height: 100%; }
+    .banner-item a { display: block;width: 100%;height: 100%; }
+    .banner-item img { width: 100%;height: 100%;object-fit: contain;display: block;background: #f8f9fa;transition: transform var(--animate-normal) ease; }
+    .banner-item:hover img { transform: scale(1.02); }
+    .banner-btn { position: absolute;top: 50%;transform: translateY(-50%);width: 24px;height: 24px;border-radius: 50%;background: rgba(255,255,255,0.8);color: var(--primary);border: none;cursor: pointer;display: flex;align-items: center;justify-content: center;font-size: 12px;z-index: 10;transition: all var(--animate-fast) ease; }
+    .banner-btn:hover { background: var(--white);box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .banner-prev { left: 8px; }
+    .banner-next { right: 8px; }
+    .banner-indicators { position: absolute;bottom: 8px;left: 50%;transform: translateX(-50%);display: flex;gap: 4px;z-index: 10; }
+    .indicator-dot { width: 6px;height: 6px;border-radius: 50%;background: rgba(255,255,255,0.6);cursor: pointer;transition: all var(--animate-normal) ease; }
+    .indicator-dot.active { background: var(--white);width: 16px;border-radius: 3px; }
+    
+    .search-sort-box { display: flex;gap: var(--gap-sm);padding: 0 var(--gap-xs);align-items: center; }
+    .search-box { flex: 1;display: flex;gap: var(--gap-sm); }
+    .search-box input { width: 100%;padding: var(--gap-sm) var(--gap-md);border: 1px solid #ddd;border-radius: 4px;outline: none;font-size: 0.75rem;background: rgba(var(--white), 0.9);transition: all var(--animate-fast) ease; }
+    .search-box input:focus { border-color: var(--primary);box-shadow: 0 0 0 2px rgba(78, 110, 242, 0.1); }
+    .search-box button { padding: 0 var(--gap-md);border: none;border-radius: 4px;background: var(--primary);color: var(--white);cursor: pointer;transition: all var(--animate-fast) ease;font-size: 0.75rem; }
+    .search-box button:hover { background: var(--primary-hover);transform: translateY(-1px); }
+    .sort-btn { padding: var(--gap-sm);border: 1px solid var(--primary);border-radius: 4px;background: var(--white);color: var(--primary);cursor: pointer;transition: all var(--animate-fast) ease;font-size: 0.65rem;display: flex;align-items: center;gap: 0.2rem; }
+    .sort-btn:hover { background: var(--primary);color: var(--white); }
+    .sort-btn i { font-size: 0.55rem; }
+    
+    .url-container { display: grid;grid-template-columns: repeat(auto-fill, var(--card-size));gap: var(--gap-md);justify-content: center; }
+    /* 卡片紧凑布局：内边距缩小，高度自适应+固定宽，彻底减少占用 */
+    .url-card { width: var(--card-size);background: var(--white);border-radius: 6px;box-shadow: var(--card-shadow);padding: var(--gap-sm);display: flex;flex-direction: column;gap: var(--gap-xs);line-height: 1.1;transition: all var(--animate-normal) cubic-bezier(0.25, 0.8, 0.25, 1);position: relative;overflow: hidden; }
+    .url-card:hover { transform: translateY(-3px) scale(1.02);box-shadow: var(--card-shadow-hover); }
+    .url-card::before { content: "";position: absolute;top: 0;left: 0;width: 100%;height: 2px;background: linear-gradient(90deg, var(--primary), var(--secondary));transform: translateX(-100%);transition: transform var(--animate-normal) ease; }
+    .url-card:hover::before { transform: translateX(0); }
+    .url-title { display: flex;align-items: center;gap: var(--gap-xs);flex-wrap: wrap; }
+    .url-title h2 { font-size: 0.7rem;flex: 1;font-weight: 600;white-space: nowrap;overflow: hidden;text-overflow: ellipsis; }
+    /* 访问按钮缩小：适配小卡片 */
+    .url-title a { color: var(--primary);text-decoration: none;font-size: 0.55rem;background: var(--gray-light);padding: 0.02rem 0.2rem;border-radius: 2px;transition: all var(--animate-fast) ease; }
+    .url-title a:hover { background: var(--primary-hover);color: var(--white); }
+    /* 标签区域缩小：字体、内边距同步压缩 */
+    .url-tags { display: flex;flex-wrap: wrap;gap: var(--gap-xs); }
+    .url-tag { font-size: 0.45rem;padding: 0.02rem 0.15rem;background: var(--tag-bg);color: var(--tag-color);border-radius: 2px;white-space: nowrap; }
+    /* 信息区置顶：合并间距，字体缩小 */
+    .url-meta { display: flex;flex-direction: column;gap: var(--gap-xs);margin-top: auto; }
+    .url-meta .meta-item { display: flex;align-items: center;gap: var(--gap-xs);font-size: 0.5rem; }
+    .meta-item.version { color: var(--secondary); }
+    .meta-item.date { color: var(--date-color); }
+    .meta-item i { font-size: 0.45rem; }
+    /* 描述区精简：字体最小，仅保留一行，适配小卡片 */
+    .url-desc { color: var(--gray-dark);font-size: 0.45rem;padding-top: var(--gap-xs);border-top: 1px solid #f5f5f5;display: -webkit-box;-webkit-line-clamp: 1;-webkit-box-orient: vertical;overflow: hidden; }
+    .no-result { text-align: center;padding: 0.8rem 0;color: var(--gray);font-size: 0.7rem;grid-column: 1 / -1; }
+    .highlight { background: var(--highlight-color);border: 1px solid var(--highlight-border);border-radius: 2px;padding: 0 1px;color: var(--highlight-text); }
+    
+    @media (max-width: 400px) {
+      :root { --logo-size: var(--logo-size-mobile);--banner-height: var(--banner-height-mobile);--card-size: var(--card-size-mobile); }
+      .share-header h1 { font-size: 1rem; }
+      .banner-btn { width: 20px;height: 20px;font-size: 10px; }
+      .sort-btn { font-size: 0.6rem;padding: 0.2rem; }
+      .search-box input { font-size: 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-ball ball1"></div>
+  <div class="bg-ball ball2"></div>
+  <div class="container">
+    <div class="logo-container"><img src="https://jianhancloud.cn/19732846/IMG_20250820_152222.webp" alt="网站Logo" class="logo-img"></div>
+    <div class="share-header"><h1>影视软件合集</h1><p>免费影视软件</p></div>
+    <div class="banner-slider" id="bannerSlider">
+      <div class="banner-list" id="bannerList"></div>
+      <button class="banner-btn banner-prev" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+      <button class="banner-btn banner-next" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+      <div class="banner-indicators" id="indicatorContainer"></div>
+    </div>
+    <div class="search-sort-box">
+      <div class="search-box"><input type="text" id="searchInput" placeholder="搜索软件名称"><button id="searchBtn"><i class="fas fa-search"></i></button></div>
+      <button class="sort-btn" id="sortBtn"><i class="fas fa-sort-amount-desc"></i><span id="sortText">最新</span></button>
+    </div>
+    <div class="url-container" id="urlContainer"></div>
+  </div>
+  <script>
+    // 配置区 - 新增/修改网址仅操作这里，无需改其他代码
+    const BANNER_CONFIG = { autoPlayTime: 3000, data: [
+      { img: 'https://picsum.photos/600/120?random=1', href: 'https://www.baidu.com', alt: '广告图1' },
+      { img: 'https://picsum.photos/600/120?random=2', href: 'https://www.bilibili.com', alt: '广告图2' },
+      { img: 'https://picsum.photos/600/120?random=3', href: 'https://github.com', alt: '广告���3' }
+    ]};
+    const SORT_CONFIG = { defaultSort: 'desc', sortKey: 'date' };
+    const URL_DATA = [
+      { name: '魔方影视', href: 'https://zdfxdk.lanzouq.com/iFP5l3gfc9ta', tags: ['安卓', '影视'], version: 'v3.2.7', date: '2026/02/01', desc: '影视软件' },
+      { name: 'YIYI影视', href: 'https://zdfxdk.lanzouq.com/iAnZM3gfca6d', tags: ['安卓', '影视'], version: 'v3.0.0', date: '2026/02/01', desc: '影视软件' },
+      { name: '火焰影视', href: 'https://zdfxdk.lanzouq.com/i3PkI3gfcabi', tags: ['安卓', '���视'], version: 'v4.1.0', date: '2026/02/01', desc: '影视软件' },
+      {name: '追剧喵', href: 'https://zdfxdk.lanzouq.com/iSoVT3gfc9yf', tags: ['安卓','影视'], version: 'v3.3.0', date: '2026/02/01', desc: '影视软件'},
+      {name: '蜗牛视频', href: 'https://zdfxdk.lanzouq.com/ilTJq3gfc9ub', tags: ['安卓','影视'], version: 'v4.0.6', date: '2026/02/01', desc: '影视软件'},
+      {name: '稀饭影视', href: 'https://wwm.lanzouv.com/iByG03hgu60d', tags: ['安卓','影视'], version: 'v4.2.6', date: '2026/02/02', desc: '影视软件'},
+      {name: '大眼萌', href: 'https://zdfxdk.lanzouq.com/i52rs3gfc8pa', tags: ['安卓','影视'], version: 'v1.3.3', date: '2026/02/01', desc: '影视软件'},
+      {name: '壹影视', href: 'https://zdfxdk.lanzouq.com/iymKB3fcotva', tags: ['安卓','影视'], version: 'v5.6.1', date: '2026/02/01', desc: '影视软件'},
+      {name: '番喜视频', href: 'https://zdfxdk.lanzouq.com/iSjO33eypfhe', tags: ['安卓','影视'], version: 'v1.8.7', date: '2026/02/01', desc: '影视软件'},
+      {name: '追忆影视', href: 'https://zdfxdk.lanzouq.com/iJ8nC3eypf9g', tags: ['安卓','影视'], version: 'v5.9.0', date: '2026/02/01', desc: '影视软件'},
+      {name: '小苹果影视', href: 'https://zdfxdk.lanzouq.com/i0nI73eypeja', tags: ['安卓','影视'], version: 'v1.0.0.3', date: '2026/02/01', desc: '影视软件'},
+      {name: '橘汁影视', href: 'https://zdfxdk.lanzouq.com/iV1fn3eypdkf', tags: ['安卓','影视'], version: 'v3.0.1.9', date: '2026/02/01', desc: '影视软件'},
+      {name: '豆丁视频', href: 'https://zdfxdk.lanzouq.com/ioayx3eypd1g', tags: ['安卓','影视'], version: 'v3.0.7', date: '2026/02/01', desc: '影视软件'},
+      {name: '鲸鱼影视', href: 'https://wwm.lanzouv.com/id05L3hhjt5g', tags: ['安卓','影视'], version: 'v1.4.0', date: '2026/02/02', desc: '影视软件'},
+    ];
+
+    // 全局状态
+    let currentSort = SORT_CONFIG.defaultSort, currentKeyword = '';
+    // 工具函数
+    const highlightKeyword = (text, keyword) => !keyword ? text : text.replace(new RegExp(keyword, 'gi'), m => `<span class="highlight">${m}</span>`);
+    const formatDate = (dateStr) => new Date(dateStr.replace(/\//g, '-')).getTime();
+    const sortData = (data, type) => [...data].sort((a, b) => type === 'desc' ? formatDate(b[SORT_CONFIG.sortKey]) - formatDate(a[SORT_CONFIG.sortKey]) : formatDate(a[SORT_CONFIG.sortKey]) - formatDate(b[SORT_CONFIG.sortKey]));
+
+    // 渲染轮播
+    function renderBanner() {
+      const bannerList = document.getElementById('bannerList'), indicatorContainer = document.getElementById('indicatorContainer');
+      bannerList.innerHTML = BANNER_CONFIG.data.map(item => `<div class="banner-item"><a href="${item.href}" target="_blank"><img src="${item.img}" alt="${item.alt}"></a></div>`).join('');
+      indicatorContainer.innerHTML = BANNER_CONFIG.data.map((_, i) => `<div class="indicator-dot ${i===0?'active':''}" data-index="${i}"></div>`).join('');
+      let currentIndex = 0, itemCount = BANNER_CONFIG.data.length, autoPlayTimer = null;
+      const goToIndex = (index) => {
+        index = index < 0 ? itemCount - 1 : index >= itemCount ? 0 : index;
+        currentIndex = index;
+        bannerList.style.transform = `translateX(-${currentIndex * 100}%)`;
+        document.querySelectorAll('.indicator-dot').forEach((dot, i) => dot.className = `indicator-dot ${i===currentIndex?'active':''}`);
+      };
+      const startAutoPlay = () => autoPlayTimer = setInterval(() => goToIndex(currentIndex + 1), BANNER_CONFIG.autoPlayTime);
+      const stopAutoPlay = () => clearInterval(autoPlayTimer);
+      document.getElementById('prevBtn').onclick = () => goToIndex(currentIndex - 1);
+      document.getElementById('nextBtn').onclick = () => goToIndex(currentIndex + 1);
+      indicatorContainer.onclick = (e) => e.target.classList.contains('indicator-dot') && goToIndex(Number(e.target.dataset.index));
+      document.getElementById('bannerSlider').onmouseenter = stopAutoPlay;
+      document.getElementById('bannerSlider').onmouseleave = startAutoPlay;
+      startAutoPlay();
+    }
+
+    // 渲染卡���
+    function renderUrlCards() {
+      const urlContainer = document.getElementById('urlContainer');
+      let filterData = URL_DATA.filter(item => item.name.toLowerCase().includes(currentKeyword.toLowerCase()) || item.tags.some(tag => tag.toLowerCase().includes(currentKeyword.toLowerCase())) || item.desc.toLowerCase().includes(currentKeyword.toLowerCase()));
+      filterData = sortData(filterData, currentSort);
+      if (!filterData.length) { urlContainer.innerHTML = '<div class="no-result">暂无匹配的软件</div>'; return; }
+      urlContainer.innerHTML = filterData.map(item => `
+        <div class="url-card" data-name="${item.name}" data-tags="${item.tags.join(',')}">
+          <div class="url-title"><h2>${highlightKeyword(item.name, currentKeyword)}</h2><a href="${item.href}" target="_blank">下载</a></div>
+          <div class="url-tags">${item.tags.map(tag => `<span class="url-tag">${highlightKeyword(tag, currentKeyword)}</span>`).join('')}</div>
+          <div class="url-meta"><div class="meta-item version"><i class="fas fa-tag"></i><span>${item.version}</span></div><div class="meta-item date"><i class="fas fa-calendar"></i><span>${item.date}</span></div></div>
+          <div class="url-desc">${highlightKeyword(item.desc, currentKeyword)}</div>
+        </div>
+      `).join('');
+    }
+
+    // 切换排序
+    function toggleSort() {
+      currentSort = currentSort === 'desc' ? 'asc' : 'desc';
+      const sortText = document.getElementById('sortText'), sortIcon = document.querySelector('.sort-btn i');
+      sortText.textContent = currentSort === 'desc' ? '最新' : '最早';
+      sortIcon.className = currentSort === 'desc' ? 'fas fa-sort-amount-desc' : 'fas fa-sort-amount-asc';
+      renderUrlCards();
+    }
+
+    // 搜索
+    function performSearch() { currentKeyword = document.getElementById('searchInput').value.trim(); renderUrlCards(); }
+
+    // 绑定事件
+    function bindEvents() {
+      document.getElementById('searchBtn').onclick = performSearch;
+      document.getElementById('searchInput').onkeypress = (e) => e.key === 'Enter' && performSearch();
+      document.getElementById('sortBtn').onclick = toggleSort;
+    }
+
+    // 初始化
+    window.onload = () => { renderBanner(); renderUrlCards(); bindEvents(); };
+  </script>
+</body>
+</html>
