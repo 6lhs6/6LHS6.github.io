@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>极简网址导航 | 正式版</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* 全局样式精简 */
+    html, body { margin: 0; padding: 0; overflow-x: hidden; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft YaHei", Arial, sans-serif; -webkit-user-select: none; user-select: none; }
+    :root {
+      --primary: #333; --primary-light: #f5f5f5; --gray-light: #d1d5db; --white: #fff;
+      --shadow: 0 2px 8px rgba(51,51,51,0.1); --radius: 6px; --transition: all 0.2s ease;
+      --block-height: 200px; /* 只改这里！电脑手机一起变 */
+    }
+    body { background: linear-gradient(120deg, #fafafa, #f5f5f5) fixed; color: #333; padding: 0 0 2rem; }
+    .container { width: 94%; max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .glass-container { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.6); box-shadow: var(--shadow); }
+    .ripple-btn { position: relative; overflow: hidden; cursor: pointer; }
+    .ripple { position: absolute; border-radius: 50%; background: rgba(51,51,51,0.3); transform: scale(0); animation: ripple 0.6s linear; pointer-events: none; }
+    @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+    @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+    /* 头部布局：logo+三条杠+右侧功能同一排 */
+    .header { padding: 0.5rem 0; margin-bottom: 0.8rem; position: sticky; top: 0; z-index: 100; width: 100%; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; width: 100%; position: relative; }
+    .logo { display: flex; align-items: center; gap: 0.4rem; text-decoration: none; color: var(--primary); z-index: 102; }
+    .logo-img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+    .nav-toggle { display: none; background: none; border: none; font-size: 1.2rem; color: var(--primary); cursor: pointer; z-index: 102; width: 40px; height: 28px; display: flex; align-items: center; justify-content: center; }
+    .nav-menu { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+    .nav-item { padding: 0.25rem 0.6rem; border-radius: var(--radius); color: #333; text-decoration: none; font-size: 0.8rem; transition: var(--transition); }
+    .nav-item:hover, .nav-item.active { background: var(--primary-light); color: var(--primary); }
+    .scroll-subtitle { flex: 1; min-width: 200px; height: 32px; line-height: 32px; background: var(--primary-light); border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(51,51,51,0.2); margin: 0.5rem 0; }
+    .scroll-subtitle-content { display: flex; animation: scroll 12s linear infinite; white-space: nowrap; }
+    .scroll-subtitle-text { color: var(--primary); font-size: 0.8rem; margin-right: 2rem; display: flex; align-items: center; gap: 0.3rem; }
+    .scroll-notice { width: 100%; height: 24px; line-height: 24px; background: var(--primary-light); border-radius: var(--radius); overflow: hidden; margin: 0.3rem 0; border: 1px solid rgba(51,51,51,0.2); }
+    .scroll-notice-content { display: flex; animation: scroll 15s linear infinite; white-space: nowrap; }
+    .scroll-notice-text { color: var(--primary); font-size: 0.75rem; margin-right: 1.5rem; }
+    .header-right { display: flex; align-items: center; gap: 0.8rem; z-index: 101; }
+    .btn { padding: 0.25rem 0.6rem; border-radius: var(--radius); border: none; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.3rem; transition: var(--transition); }
+    .btn-notice { background: #666; color: var(--white); }
+    .btn-notice:hover { background: var(--primary); }
+    .btn-back { background: var(--primary-light); color: var(--primary); }
+    .btn-back:hover { background: var(--primary); color: var(--white); }
+    .badge { background: var(--white); color: #666; font-size: 0.6rem; padding: 0.05rem 0.25rem; border-radius: 8px; position: relative; top: -2px; }
+    .real-time-clock { font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
+    .clock-icon { color: var(--primary); }
+
+    /* 轮播 */
+    .ad-carousel { width: 100%; height: 180px; margin-bottom: 0.8rem; border-radius: var(--radius); overflow: hidden; position: relative; box-shadow: var(--shadow); cursor: pointer; }
+    .carousel-wrapper { width: 100%; height: 100%; display: flex; transition: transform 0.5s ease-out; }
+    .ad-item { flex: 0 0 100%; }
+    .ad-item img { width: 100%; height: 100%; object-fit: cover; }
+    .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.8); border: none; color: var(--primary); font-size: 0.9rem; cursor: pointer; z-index: 10; }
+    .btn-prev { left: 8px; }
+    .btn-next { right: 8px; }
+    .carousel-indicators { position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; z-index: 10; }
+    .indicator { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.6); cursor: pointer; }
+    .indicator.active { background: var(--primary); width: 18px; border-radius: 4px; }
+
+    /* 网址卡片 */
+    .url-list { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .url-card { background: var(--white); border-radius: var(--radius); padding: 0 1rem; box-shadow: var(--shadow); border: 1px solid var(--gray-light); height: 70px; display: flex; align-items: center; justify-content: space-between; transition: var(--transition); position: relative; overflow: hidden; width: 100%; cursor: default; }
+    .url-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(51,51,51,0.18); }
+    .card-name { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+    .card-name i { color: var(--primary); font-size: 0.9rem; }
+    .visit-btn { display: flex; align-items: center; justify-content: center; background: var(--primary-light); color: var(--primary); text-decoration: none; border-radius: var(--radius); font-size: 0.8rem; padding: 0 1.2rem; height: 38px; transition: var(--transition); cursor: pointer; }
+    .visit-btn:hover { background: var(--primary); color: var(--white); }
+    .visit-btn:active { transform: scale(0.95); background: #555; }
+    .visit-btn.locked { cursor: not-allowed; opacity: 0.7; }
+
+    /* 独立网址页面 */
+    .url-view-page { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f5f5f5; z-index: 9999; overflow: hidden; animation: pageIn 0.4s ease forwards; transition: background 0.3s ease; display: block; }
+    @keyframes pageIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+    @keyframes pageOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.98); } }
+    .url-view-page.hide { animation: pageOut 0.3s ease forwards; pointer-events: none; }
+    .url-ad-block { position: fixed; top: 0; left: 0; width: 100%; height: var(--block-height); background: var(--primary-light); border-bottom: 1px solid var(--gray-light); z-index: 99991; pointer-events: none; }
+    .url-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 99990; loading: lazy; allowfullscreen: true; referrerpolicy: no-referrer; }
+    .close-url-view { position: fixed; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; z-index: 99992; transition: all 0.2s ease; }
+    .close-url-view:hover { background: var(--primary); transform: scale(1.1); }
+    .close-url-view:active { transform: scale(0.95); }
+
+    /* 通知页 */
+    .notice-page { padding-top: 0.8rem; }
+    .notice-header { font-size: 1.3rem; color: var(--primary); margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 2px var(--primary-light) solid; }
+    .notice-list-container { background: var(--white); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); }
+    .notice-item { padding: 0.8rem 0; border-bottom: 1px dashed var(--gray-light); }
+    .notice-item:last-child { border-bottom: none; }
+    .notice-date { font-size: 0.8rem; color: #666; font-weight: 600; margin-bottom: 0.4rem; }
+    .notice-text { font-size: 0.9rem; line-height: 1.6; -webkit-user-select: text; user-select: text; }
+    .no-notice { text-align: center; color: #999; padding: 1.5rem 0; font-size: 0.8rem; }
+
+    /* 底部 */
+    .footer { text-align: center; padding: 1rem 0; color: #666; font-size: 0.8rem; margin-top: 1.5rem; }
+
+    /* 移动端适配 —— 我已经删掉手机端单独覆盖，统一用 root */
+    @media (max-width: 768px) {
+      .header { padding: 0.3rem 0; }
+      .nav-menu { display: none; flex-direction: column; gap: 0.4rem; margin: 0.5rem 0; border-top: 1px solid var(--gray-light); }
+      .nav-menu.active { display: flex; }
+      .nav-toggle { display: flex; }
+      .scroll-subtitle { min-width: 100px; height: 30px; line-height: 30px; }
+      .scroll-subtitle-text { font-size: 0.75rem; }
+      .scroll-notice { height: 22px; line-height: 22px; }
+      .scroll-notice-text { font-size: 0.7rem; }
+      .ad-carousel { height: 100px; }
+      .url-card { padding: 0 0.6rem; height: 65px !important; }
+      .card-name { font-size: 0.9rem !important; }
+      .visit-btn { padding: 0 0.8rem !important; font-size: 0.7rem !important; height: 32px !important; }
+      .close-url-view { width: 36px; height: 36px; font-size: 1rem; top: 15px; right: 15px; }
+    }
+    @media (min-width: 769px) {
+      .nav-toggle { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page active" id="homePage">
+  <header class="header glass-container">
+    <div class="container">
+      <div class="header-top">
+        <a href="#" class="logo ripple-btn">
+          <img src="你的logo地址" alt="logo" class="logo-img">
+          <span class="logo-text">极简网址导航</span>
+        </a>
+        <div class="header-right">
+          <button class="btn btn-notice ripple-btn" onclick="switchPage('noticePage')">
+            <i class="fas fa-bell"></i> 通知 <span class="badge" id="unreadBadge">!</span>
+          </button>
+          <div class="real-time-clock">
+            <i class="fas fa-clock clock-icon"></i>
+            <span id="clockText">2025-01-01 00:00:00</span>
+          </div>
+          <button class="nav-toggle ripple-btn" id="navToggle"><i class="fas fa-bars"></i></button>
+        </div>
+      </div>
+      <nav class="nav-menu" id="homeNavMenu">
+        <a href="#" class="nav-item active ripple-btn">首页</a>
+        <a href="#" class="nav-item ripple-btn">常用工具</a>
+        <a href="#" class="nav-item ripple-btn">资源合集</a>
+        <a href="#" class="nav-item ripple-btn" onclick="switchPage('noticePage')">站长通知</a>
+      </nav>
+      <div class="scroll-subtitle">
+        <div class="scroll-subtitle-content">
+          <span class="scroll-subtitle-text"><i class="fas fa-star"></i> 本站所有资源均为免费分享，仅供学习交流</span>
+          <span class="scroll-subtitle-text"><i class="fas fa-shield"></i> 请勿用于商业用途，侵权请���系站长删除</span>
+          <span class="scroll-subtitle-text"><i class="fas fa-sync-alt"></i> 资源持续更新中，感谢您的关注与支持</span>
+        </div>
+      </div>
+      <div class="scroll-notice">
+        <div class="scroll-notice-content">
+          <span class="scroll-notice-text"><i class="fas fa-bullhorn"></i> 仅点击立即访问按钮跳转，添加按钮按压下沉点击特效</span>
+          <span class="scroll-notice-text"><i class="fas fa-tools"></i> 全端兼容PC/移动端，屏蔽层高度可自定义调整</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="container">
+    <div class="ad-carousel ripple-btn" id="adCarousel">
+      <div class="carousel-wrapper" id="carouselWrapper">
+        <div class="ad-item"><a href="#"><img src="https://picsum.photos/1200/200?random=1" alt="轮播1"></a></div>
+        <div class="ad-item"><a href="#"><img src="https://picsum.photos/1200/200?random=2" alt="轮播2"></a></div>
+        <div class="ad-item"><a href="#"><img src="https://picsum.photos/1200/200?random=3" alt="轮播3"></a></div>
+      </div>
+      <button class="carousel-btn btn-prev ripple-btn" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+      <button class="carousel-btn btn-next ripple-btn" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+      <div class="carousel-indicators" id="carouselIndicators"></div>
+    </div>
+    <div class="url-list" id="urlList"></div>
+  </section>
+
+  <footer class="footer container">
+    <p>© 2025 极简网址导航 | 全���兼容 · 无bug</p>
+  </footer>
+</div>
+
+<div class="page" id="noticePage">
+  <header class="header glass-container">
+    <div class="container">
+      <div class="header-top">
+        <a href="#" class="logo ripple-btn">
+          <img src="你的logo地址" alt="logo" class="logo-img">
+          <span class="logo-text">极简网址导航</span>
+        </a>
+        <div class="header-right">
+          <button class="btn btn-back ripple-btn" onclick="switchPage('homePage')">
+            <i class="fas fa-arrow-left"></i> ��回
+          </button>
+          <div class="real-time-clock">
+            <i class="fas fa-clock clock-icon"></i>
+            <span id="noticeClockText">2025-01-01 00:00:00</span>
+          </div>
+          <button class="nav-toggle ripple-btn" id="noticeNavToggle"><i class="fas fa-bars"></i></button>
+        </div>
+      </div>
+      <nav class="nav-menu" id="noticeNavMenu">
+        <a href="#" class="nav-item ripple-btn" onclick="switchPage('homePage')">首页</a>
+        <a href="#" class="nav-item ripple-btn">常用工具</a>
+        <a href="#" class="nav-item ripple-btn">资源合集</a>
+        <a href="#" class="nav-item active ripple-btn">站长通知</a>
+      </nav>
+      <div class="scroll-subtitle">
+        <div class="scroll-subtitle-content">
+          <span class="scroll-subtitle-text"><i class="fas fa-bell"></i> 通知公告实时更新，建议定期查看</span>
+          <span class="scroll-subtitle-text"><i class="fas fa-check"></i> 点击通知页自动标记所有通知为已读</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="container notice-page">
+    <h2 class="notice-header">站长通知公告</h2>
+    <div class="notice-list-container" id="noticeListContainer"></div>
+  </section>
+
+  <footer class="footer container">
+    <p>© 2025 极简网址导航 | 全端兼容 · 无bug</p>
+  </footer>
+</div>
+
+<script>
+  const urlData = [
+    { name: "百度搜索", url: "https://www.baidu.com" },
+    { name: "哔哩哔哩", url: "https://www.bilibili.com" },
+    { name: "GitHub", url: "https://github.com" },
+    { name: "测试资源站", url: "https://www.xxx.com" }
+  ];
+  const noticeData = [
+    { date: "2025-01-21", text: "仅立即访问按钮可跳转网址，卡片其他区域无响应，添加按钮按压下沉点击特效" },
+    { date: "2025-01-20", text: "导航按键与logo同一水平排，重构头部布局，PC端隐藏三条杠仅移动端显示" },
+    { date: "2025-01-19", text: "彻底修复点击失效，改为单元素轻锁，支持无限次点击/关闭无卡顿" }
+  ];
+  let currentAdIndex = 0, adInterval = null, AD_AUTO_PLAY_INTERVAL = 3000;
+  const READ_NOTICE_KEY = "read_notice_ids";
+  let urlViewPageCreated = false;
+  const LOCK_TIME = 300;
+
+  function updateRealTimeClock() {
+    const now = new Date();
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,0)}-${String(now.getDate()).padStart(2,0)} ${String(now.getHours()).padStart(2,0)}:${String(now.getMinutes()).padStart(2,0)}:${String(now.getSeconds()).padStart(2,0)}`;
+    document.getElementById('clockText').textContent = timeStr;
+    document.getElementById('noticeClockText').textContent = timeStr;
+  }
+  setInterval(updateRealTimeClock, 1000);
+  updateRealTimeClock();
+
+  function switchPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    if (pageId === 'noticePage') markAllAsRead();
+    document.querySelectorAll('.nav-menu').forEach(m => m.classList.remove('active'));
+    document.querySelectorAll('.nav-toggle i').forEach(i => i.className = 'fas fa-bars');
+  }
+
+  function openUrlViewPage(url, btnEl) {
+    btnEl.classList.add('locked');
+    setTimeout(() => btnEl.classList.remove('locked'), LOCK_TIME);
+    if (urlViewPageCreated) {
+      const iframe = document.querySelector('.url-iframe');
+      const viewPage = document.querySelector('.url-view-page');
+      viewPage.classList.remove('hide');
+      viewPage.style.background = '#f5f5f5';
+      iframe.src = 'about:blank';
+      setTimeout(() => {
+        iframe.src = url;
+        iframe.onload = function() { viewPage.style.background = '#fff'; this.onload = null; };
+      }, 50);
+      return;
+    }
+    urlViewPageCreated = true;
+    const page = document.createElement('div');
+    page.className = 'url-view-page';
+    page.innerHTML = `<div class="url-ad-block"></div><button class="close-url-view ripple-btn" id="closeUrlView"><i class="fas fa-times"></i></button><iframe class="url-iframe" src="${url}" allowfullscreen loading="lazy" referrerpolicy="no-referrer"></iframe>`;
+    document.body.appendChild(page);
+    document.getElementById('closeUrlView').addEventListener('click', () => {
+      const viewPage = document.querySelector('.url-view-page');
+      const iframe = document.querySelector('.url-iframe');
+      viewPage.classList.add('hide');
+      setTimeout(() => { iframe.src = 'about:blank'; viewPage.style.background = '#f5f5f5'; }, 300);
+    });
+    initRippleEffect();
+    document.querySelector('.url-iframe').onload = function() { page.style.background = '#fff'; this.onload = null; };
+  }
+
+  function initNavToggle(toggleId, menuId) {
+    document.getElementById(toggleId).addEventListener('click', function() {
+      const menu = document.getElementById(menuId);
+      menu.classList.toggle('active');
+      this.querySelector('i').className = menu.classList.contains('active') ? 'fas fa-times' : 'fas fa-bars';
+    });
+  }
+  initNavToggle('navToggle', 'homeNavMenu');
+  initNavToggle('noticeNavToggle', 'noticeNavMenu');
+
+  function initRippleEffect() {
+    document.querySelectorAll('.ripple-btn').forEach(btn => {
+      if (btn.dataset.rippleBind) return;
+      btn.dataset.rippleBind = 'true';
+      btn.addEventListener('click', (e) => {
+        const ripple = document.createElement('span');
+        const rect = btn.getBoundingClientRect();
+        const size = Math.min(rect.width, rect.height);
+        ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size/2}px;top:${e.clientY - rect.top - size/2}px;`;
+        ripple.classList.add('ripple');
+        btn.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    });
+  }
+  initRippleEffect();
+
+  function initCarousel() {
+    const items = document.querySelectorAll('.ad-item');
+    document.querySelectorAll('.ad-item').forEach((_, idx) => {
+      const dot = document.createElement('span');
+      dot.className = `indicator ${idx === 0 ? 'active' : ''}`;
+      dot.dataset.index = idx;
+      dot.addEventListener('click', () => goToAd(idx));
+      document.getElementById('carouselIndicators').appendChild(dot);
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => goToAd(currentAdIndex - 1));
+    document.getElementById('nextBtn').addEventListener('click', () => goToAd(currentAdIndex + 1));
+    const startAutoPlay = () => { adInterval = setInterval(() => goToAd(currentAdIndex + 1), AD_AUTO_PLAY_INTERVAL); };
+    startAutoPlay();
+    const carousel = document.getElementById('adCarousel');
+    carousel.addEventListener('mouseenter', () => clearInterval(adInterval));
+    carousel.addEventListener('mouseleave', startAutoPlay);
+  }
+  function goToAd(index) {
+    const items = document.querySelectorAll('.ad-item');
+    currentAdIndex = index < 0 ? items.length - 1 : index >= items.length ? 0 : index;
+    document.getElementById('carouselWrapper').style.transform = `translateX(-${currentAdIndex * 100}%)`;
+    document.querySelectorAll('.indicator').forEach((dot, idx) => dot.classList.toggle('active', idx === currentAdIndex));
+  }
+
+  function renderUrlCards(data) {
+    const container = document.getElementById('urlList');
+    if (!data.length) { container.innerHTML = '<div class="no-notice">暂无相关网址</div>'; return; }
+    container.innerHTML = '';
+    data.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'url-card';
+      card.innerHTML = `<div class="card-name"><i class="fas fa-link"></i> ${item.name}</div><div class="visit-btn">立即访问</div>`;
+      container.appendChild(card);
+      const btn = card.querySelector('.visit-btn');
+      btn.addEventListener('click', () => openUrlViewPage(item.url, btn));
+    });
+    initRippleEffect();
+  }
+
+  function renderNoticeList(data) {
+    const container = document.getElementById('noticeListContainer');
+    if (!data.length) { container.innerHTML = '<div class="no-notice">暂无通知</div>'; return; }
+    container.innerHTML = '';
+    data.forEach(item => {
+      const notice = document.createElement('div');
+      notice.className = 'notice-item';
+      notice.innerHTML = `<div class="notice-date">${item.date}</div><div class="notice-text">${item.text}</div>`;
+      container.appendChild(notice);
+    });
+  }
+
+  function checkUnreadNotice() {
+    if (!localStorage.getItem(READ_NOTICE_KEY)) localStorage.setItem(READ_NOTICE_KEY, '[]');
+    const hasUnread = noticeData.some(n => !JSON.parse(localStorage.getItem(READ_NOTICE_KEY)).includes(`${n.date}-${n.text.substring(0,20)}`));
+    document.getElementById('unreadBadge').style.display = hasUnread ? 'inline' : 'none';
+  }
+  function markAllAsRead() {
+    localStorage.setItem(READ_NOTICE_KEY, JSON.stringify(noticeData.map(n => `${n.date}-${n.text.substring(0,20)}`)));
+    checkUnreadNotice();
+  }
+
+  window.onresize = (() => {
+    let timer = null;
+    return () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        document.querySelectorAll('.nav-menu').forEach(m => m.classList.remove('active'));
+        document.querySelectorAll('.nav-toggle i').forEach(i => i.className = 'fas fa-bars');
+      }, 200);
+    };
+  })();
+
+  window.addEventListener('DOMContentLoaded', () => {
+    initCarousel();
+    renderUrlCards(urlData);
+    renderNoticeList(noticeData);
+    checkUnreadNotice();
+  });
+</script>
+</body>
+</html>
