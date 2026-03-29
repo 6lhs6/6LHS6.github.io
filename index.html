@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KaleiBox</title>
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",Arial,sans-serif;user-select:none;}
+:root{--primary:#333;--primary-light:#f5f5f5;--gray-light:#d1d5db;--white:#fff;--shadow:0 2px 8px rgba(51,51,51,0.1);--radius:6px;--transition:all 0.3s ease;}
+/* 金粉色背景（更浓郁，暖调更明显） */
+body{background:#FFEFF4;color:#333;padding:0 0 2rem;}
+.container{width:94%;max-width:1200px;margin:0 auto;position:relative;z-index:1;}
+.page{display:none;}
+.page.active{display:block;}
+.glass-container{background:rgba(255,255,255,0.85);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.6);box-shadow:var(--shadow);}
+.ripple-btn{position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s ease;}
+.ripple{position:absolute;border-radius:50%;background:rgba(51,51,51,0.25);transform:scale(0);animation:ripple 0.8s ease-out;pointer-events:none;}
+@keyframes ripple{to{transform:scale(4);opacity:0;}}
+@keyframes btnBounce{0%{transform:scale(1);}50%{transform:scale(0.92);}100%{transform:scale(1);}}
+.btn-bounce:active{animation:btnBounce 0.4s ease;}
+@keyframes glow{0%{box-shadow:0 4px 12px rgba(51,51,0.1);}50%{box-shadow:0 4px 20px rgba(51,51,51,0.18),0 0 12px rgba(51,51,51,0.15);}100%{box-shadow:0 4px 12px rgba(51,51,51,0.1);}}
+@keyframes scroll{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
+.loader-wrapper{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:12px;color:#fff;font-size:14px;}
+.loader{width:40px;height:40px;border:3px solid rgba(255,255,255,0.2);border-top:3px solid #fff;border-radius:50%;animation:spin 1.2s linear infinite;}
+@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeIn 0.4s ease forwards;}
+
+.fav-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;}
+.fav-modal.active{display:flex;}
+.fav-box{background:#fff;width:90%;max-width:380px;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+.fav-header{padding:12px 15px;background:var(--primary);color:#fff;display:flex;justify-content:space-between;align-items:center;}
+.fav-close{cursor:pointer;font-size:16px;}
+.fav-body{padding:15px;max-height:400px;overflow-y:auto;}
+.fav-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;}
+.fav-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;cursor:pointer;}
+.fav-actions{display:flex;gap:6px;}
+.fav-btn{padding:4px 8px;font-size:12px;border-radius:4px;border:none;background:var(--primary-light);cursor:pointer;}
+.fav-btn.primary{background:var(--primary);color:#fff;}
+.no-fav{text-align:center;padding:20px 0;color:#999;font-size:14px;}
+
+.header{padding:0.3rem 0;margin-bottom:0.8rem;position:sticky;top:0;z-index:100;}
+.header-content{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;}
+.logo{display:flex;align-items:center;gap:0.4rem;text-decoration:none;color:var(--primary);}
+.logo-img{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);}
+.nav-menu{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.nav-item{padding:0.25rem 0.6rem;border-radius:var(--radius);color:#333;text-decoration:none;font-size:0.8rem;transition:var(--transition);}
+.nav-item:hover,.nav-item.active{background:var(--primary-light);color:var(--primary);transform:translateY(-1px);}
+.nav-toggle{display:none;background:none;border:none;font-size:1rem;color:var(--primary);cursor:pointer;}
+.search-bar{flex:1;max-width:350px;position:relative;}
+.search-input{width:100%;padding:0.4rem 0.8rem 0.4rem 2rem;border:1px solid var(--gray-light);border-radius:var(--radius);outline:none;font-size:0.8rem;transition:var(--transition);}
+.search-input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(51,51,51,0.15);}
+.search-icon{position:absolute;left:0.6rem;top:50%;transform:translateY(-50%);color:var(--primary);font-size:0.8rem;}
+.scroll-notice{width:100%;height:24px;line-height:24px;background:var(--primary-light);border-radius:var(--radius);overflow:hidden;margin:0.3rem 0;padding:0 0.6rem;border:1px solid rgba(51,51,51,0.2);}
+.scroll-notice-content{display:flex;animation:scroll 15s linear infinite;white-space:nowrap;}
+.scroll-notice-text{color:var(--primary);font-size:0.75rem;}
+.header-right{display:flex;align-items:center;gap:0.8rem;}
+.btn{padding:0.25rem 0.6rem;border-radius:var(--radius);border:none;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.3rem;transition:var(--transition);}
+.btn-notice{background:#666;color:var(--white);}
+.btn-notice:hover{background:var(--primary);transform:translateY(-1px);}
+.btn-back{background:var(--primary-light);color:var(--primary);}
+.btn-back:hover{background:var(--primary);color:var(--white);transform:translateY(-1px);}
+.badge{background:var(--white);color:#666;font-size:0.6rem;padding:0.05rem 0.25rem;border-radius:8px;position:relative;top:-2px;}
+.real-time-clock{font-size:0.8rem;display:flex;align-items:center;gap:0.3rem;white-space:nowrap;}
+.clock-icon{color:var(--primary);}
+.ad-carousel{width:100%;height:180px;margin-bottom:0.8rem;border-radius:var(--radius);overflow:hidden;position:relative;box-shadow:var(--shadow);cursor:pointer;}
+.carousel-wrapper{width:100%;height:100%;display:flex;transition:transform 0.5s ease-out;}
+.ad-item{flex:0 0 100%;}
+.ad-item img{width:100%;height:100%;object-fit:cover;}
+.carousel-btn{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.8);border:none;color:var(--primary);font-size:0.9rem;cursor:pointer;z-index:10;transition:all 0.3s;}
+.carousel-btn:hover{background:#fff;transform:translateY(-50%) scale(1.1);}
+.btn-prev{left:8px;}
+.btn-next{right:8px;}
+.carousel-indicators{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:5px;z-index:10;}
+.indicator{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.6);cursor:pointer;transition:all 0.3s;}
+.indicator.active{background:var(--primary);width:18px;border-radius:4px;}
+.tag-filter{display:flex;align-items:center;flex-wrap:wrap;gap:0.2rem;padding:0.2rem 0.4rem;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:0.6rem;border:1px solid var(--gray-light);min-height:36px;align-content:center;}
+.filter-title{font-size:0.7rem;margin-right:0.1rem;white-space:nowrap;}
+.filter-tags{display:flex;flex-wrap:wrap;gap:0.2rem;flex:1;}
+.filter-tag{padding:0.12rem 0.4rem;border-radius:12px;font-size:0.65rem;background:var(--primary-light);color:var(--primary);cursor:pointer;border:none;height:22px;display:flex;align-items:center;justify-content:center;gap:0.2rem;transition:all 0.3s ease;}
+.filter-tag:hover{transform:translateY(-1px) scale(1.05);}
+.filter-tag.active{background:var(--primary);color:var(--white);}
+.url-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.6rem;margin-bottom:1.5rem;}
+.url-card{background:var(--white);border-radius:var(--radius);padding:0.6rem 0.4rem;box-shadow:var(--shadow);border:1px solid var(--gray-light);cursor:pointer;min-height:100px;display:flex;flex-direction:column;justify-content:space-between;transition:all 0.3s ease;position:relative;overflow:hidden;}
+.url-card:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 6px 18px rgba(51,51,51,0.15);animation:glow 2s ease-in-out infinite alternate;}
+.card-title{font-size:0.75rem;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:center;}
+.card-tags{display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:center;margin:0.4rem 0;}
+.tag{font-size:0.6rem;padding:0.1rem 0.3rem;background:var(--primary-light);color:var(--primary);border-radius:3px;display:flex;align-items:center;justify-content:center;transition:all 0.3s;}
+.url-card:hover .tag{background:var(--primary);color:var(--white);}
+.card-bottom{display:flex;gap:4px;width:100%;}
+.visit-btn{flex:1;display:flex;align-items:center;justify-content:center;background:var(--primary-light);color:var(--primary);text-decoration:none;border-radius:var(--radius);font-size:0.7rem;height:28px;transition:all 0.3s ease;}
+.url-card:hover .visit-btn{background:var(--primary);color:var(--white);}
+.add-fav{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--primary-light);color:var(--primary);border:none;border-radius:var(--radius);font-size:12px;cursor:pointer;transition:all 0.3s ease;}
+.url-card:hover .add-fav{background:var(--primary);color:var(--white);}
+.add-fav.faved{background:var(--primary);color:var(--white);}
+.notice-page{padding-top:0.8rem;}
+.notice-header{font-size:1.3rem;color:var(--primary);margin-bottom:1rem;padding-bottom:0.4rem;border-bottom:2px solid var(--primary-light);}
+.notice-list-container{background:var(--white);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow);}
+.notice-item{padding:0.8rem 0;border-bottom:1px dashed var(--gray-light);transition:all 0.3s;}
+.notice-item:last-child{border-bottom:none;}
+.notice-item:hover{padding-left:0.5rem;border-left:3px solid var(--primary);background:#fafafa;}
+.notice-date{font-size:0.8rem;color:#666;font-weight:600;margin-bottom:0.4rem;}
+.notice-text{font-size:0.9rem;line-height:1.6;user-select:text;}
+.no-notice{text-align:center;color:#999;padding:1.5rem 0;font-size:0.8rem;}
+.footer{text-align:center;padding:1rem 0;color:#666;font-size:0.8rem;margin-top:1.5rem;}
+
+#viewer{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:9999;}
+#viewer.active{display:block;animation:fadeIn 0.4s ease;}
+#top-mask{position:fixed;top:0;left:0;width:100%;background:#fff;z-index:99999;}
+#bottom-mask{position:fixed;bottom:0;left:0;width:100%;background:#fff;z-index:99999;}
+#frame{width:100%;height:100%;border:none;background:#fff;color-scheme:light;}
+#close-view{position:fixed;top:12px;right:12px;width:36px;height:36px;background:rgba(0,0,0,0.5);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:999999;font-size:16px;cursor:pointer;transition:all 0.3s;}
+#close-view:hover{background:rgba(0,0,0,0.7);transform:scale(1.1);}
+
+/* 动态炫酷无网络页面 */
+.offline-container {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(135deg, #141e30, #243b55);
+  display: flex;
+  align-items:center;justify-content:center;flex-direction:column;color:#fff;position:relative;overflow:hidden;
+}
+.wave {
+  position: absolute;bottom:0;left:0;width:200%;height:200px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff15' d='M0,192L48,208C96,224,192,256,288,245.3C384,235,480,181,576,144C672,107,768,85,864,90.7C960,96,1056,128,1152,149.3C1248,171,1344,181,1392,186.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat:repeat-x;background-size:1440px 200px;animation:wave 12s linear infinite;opacity:0.2;
+}
+.wave2 {bottom:20px;animation:wave 18s linear infinite reverse;opacity:0.1;}
+@keyframes wave {0%{transform:translateX(0);}100%{transform:translateX(-1440px);}}
+.offline-icon {font-size:80px;margin-bottom:20px;color:#4fc3f7;animation:float 3s ease-in-out infinite;}
+@keyframes float {0%,100%{transform:translateY(0px);}50%{transform:translateY(-15px);}}
+.offline-title {font-size:24px;font-weight:bold;margin-bottom:10px;}
+.offline-desc {font-size:14px;color:#aaa;text-align:center;line-height:1.6;margin-bottom:35px;max-width:280px;}
+.offline-btn {padding:12px 30px;background:#4fc3f7;color:#111;border:none;border-radius:50px;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(79,195,247,0.3);}
+.offline-btn:hover {transform:scale(1.08);background:#81d4fa;}
+
+@media (max-width:768px){
+.header-content{flex-direction:column;align-items:stretch;}
+.nav-menu{display:none;flex-direction:column;gap:0.4rem;margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid var(--gray-light);}
+.nav-menu.active{display:flex;}
+.nav-toggle{display:block;position:absolute;top:0.5rem;right:0.5rem;}
+.search-bar{max-width:100%;}
+.scroll-notice{height:22px;line-height:22px;}
+.scroll-notice-text{font-size:0.7rem;}
+.ad-carousel{height:100px;}
+.tag-filter{gap:0.15rem!important;padding:0.15rem 0.3rem!important;margin-bottom:0.4rem!important;min-height:32px!important;}
+}
+</style>
+</head>
+<body>
+
+<div class="loader-wrapper" id="loader"><div class="loader"></div><div>正在加载...</div></div>
+<div id="viewer">
+  <div id="close-view">✕</div>
+  <div id="top-mask"></div>
+  <div id="bottom-mask"></div>
+  <iframe id="frame" allowfullscreen></iframe>
+</div>
+
+<div class="fav-modal" id="favModal">
+  <div class="fav-box">
+    <div class="fav-header">
+      <span>我的收藏</span>
+      <span class="fav-close" id="closeFav">✕</span>
+    </div>
+    <div class="fav-body" id="favList"></div>
+  </div>
+</div>
+
+<div class="page active" id="homePage">
+<header class="header glass-container">
+<div class="container">
+<div class="header-content">
+<a href="https://link3.cc/rjzygxs" class="logo ripple-btn btn-bounce">
+  <img src="https://jianhancloud.cn/19732846/IMG_20260328_184418.webp" alt="logo" class="logo-img">
+  <span class="logo-text">KaleiBox</span>
+</a>
+<button class="nav-toggle ripple-btn btn-bounce" id="navToggle"><i class="fas fa-bars"></i></button>
+<nav class="nav-menu" id="homeNavMenu">
+<a href="#" class="nav-item ripple-btn btn-bounce active">首页</a>
+<a href="#" class="nav-item ripple-btn btn-bounce" data-page="noticePage">官方通知</a>
+</nav>
+<div class="search-bar">
+  <i class="fas fa-search search-icon"></i>
+  <input type="text" class="search-input" id="homeSearchInput" placeholder="搜索名称/标签...">
+</div>
+<div class="scroll-notice">
+  <div class="scroll-notice-content">
+    <span class="scroll-notice-text"><i class="fas fa-bullhorn"></i> 本软件网盘内容仅供个人学习/参考使用，请于24小时内删除。请务必看官方通知公告!</span>
+  </div>
+</div>
+<div class="header-right">
+<button class="btn btn-notice ripple-btn btn-bounce" id="openFavBtn"><i class="fas fa-star"></i> 收藏</button>
+<button class="btn btn-notice ripple-btn btn-bounce" data-page="noticePage">
+  <i class="fas fa-bell"></i> 通知 <span class="badge" id="unreadBadge">!</span>
+</button>
+<div class="real-time-clock">
+  <i class="fas fa-clock clock-icon"></i><span id="clockText">00:00:00</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+
+<section class="container">
+<div class="ad-carousel ripple-btn" id="adCarousel">
+<div class="carousel-wrapper" id="carouselWrapper">
+<div class="ad-item"><a href="https://flowus.cn/zygxs/ebbbb894-fdfd-4834-aabb-70262925de08"><img src="https://jianhancloud.cn/19732846/IMG_20260202_013636.webp" alt="轮播1"></a></div>
+<div class="ad-item"><a href="https://link3.cc/rjzygxs"><img src="https://jianhancloud.cn/19732846/IMG_20260130_164744.webp" alt="轮播2"></a></div>
+<div class="ad-item"><a href="https://flowus.cn/zygxs/ebbbb894-fdfd-4834-aabb-70262925de08"><img src="https://jianhancloud.cn/19732846/IMG_20260202_013636.webp" alt="轮播3"></a></div>
+</div>
+<button class="carousel-btn btn-prev ripple-btn btn-bounce" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+<button class="carousel-btn btn-next ripple-btn btn-bounce" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+<div class="carousel-indicators" id="carouselIndicators"></div>
+</div>
+
+<div class="tag-filter" id="tagFilter">
+<div class="filter-title">标签筛选：</div>
+<div class="filter-tags" id="filterTags"></div>
+</div>
+
+<div class="url-grid" id="urlGrid"></div>
+</section>
+<footer class="footer container"><p>© 2026 KaleiBox</p></footer>
+</div>
+
+<div class="page" id="noticePage">
+<header class="header glass-container">
+<div class="container">
+<div class="header-content">
+<a href="https://link3.cc/rjzygxs" class="logo ripple-btn btn-bounce">
+  <img src="https://jianhancloud.cn/19732846/IMG_20260328_184418.webp" alt="logo" class="logo-img">
+  <span class="logo-text">KaleiBox</span>
+</a>
+<button class="nav-toggle ripple-btn btn-bounce" id="noticeNavToggle"><i class="fas fa-bars"></i></button>
+<nav class="nav-menu" id="noticeNavMenu">
+<a href="#" class="nav-item ripple-btn btn-bounce" data-page="homePage">首页</a>
+<a href="#" class="nav-item ripple-btn btn-bounce active">公告</a>
+</nav>
+<div class="search-bar">
+  <i class="fas fa-search search-icon"></i>
+  <input type="text" class="search-input" id="noticeSearchInput" placeholder="搜索通知内容...">
+</div>
+<div class="header-right">
+<button class="btn btn-back ripple-btn btn-bounce" data-page="homePage"><i class="fas fa-arrow-left"></i> 返回</button>
+</div>
+</div>
+</div>
+</header>
+
+<section class="container notice-page">
+<h2 class="notice-header">官方通知公告</h2>
+<div class="notice-list-container" id="noticeListContainer"></div>
+</section>
+<footer class="footer container"><p>© 2026 KaleiBox</p></footer>
+</div>
+
+<script>
+const urlData = [
+{name:"缺失软件反馈",url:"https://flowus.cn/zygxs/ebbbb894-fdfd-4834-aabb-70262925de08",tags:["软件反馈","缺失软件"],top:40,bottom:20},
+{name:"影视软件",url:"https://rjzygxs.lanzouw.com/b014x5q91g",tags:["影视","娱乐"],top:40,bottom:20},
+{name:"漫画软件",url:"https://rjzygxs.lanzouw.com/b014x5q96b",tags:["漫画","娱乐"],top:40,bottom:20},
+{name:"动漫软件",url:"https://rjzygxs.lanzouw.com/b014x5r6eh",tags:["动漫","娱乐"],top:40,bottom:20},
+{name:"小说软件",url:"https://rjzygxs.lanzouw.com/b014x5qpof",tags:["小说","娱乐"],top:40,bottom:20},
+{name:"法学软件",url:"https://rjzygxs.lanzouw.com/b014x5r67a",tags:["法学","娱乐"],top:40,bottom:20},
+{name:"TV软件",url:"https://rjzygxs.lanzouw.com/b014x5qplc",tags:["TV","娱乐"],top:40,bottom:20},
+{name:"游戏类",url:"https://rjzygxs.lanzouw.com/b014x5r94f",tags:["游戏","娱乐"],top:40,bottom:20},
+{name:"音乐软件",url:"https://rjzygxs.lanzouw.com/b014x5q99e",tags:["音乐","娱乐"],top:40,bottom:20},
+{name:"工具软件",url:"https://rjzygxs.lanzouw.com/b014x5rbbe",tags:["工具","娱乐"],top:40,bottom:20}
+];
+const noticeData = [{date:"2026-03-29",text:"免责协议——1.本软件网盘内容仅供个人学习/参考使用，请于24小时内删除。2.使用者需自行承担因传播、滥用导致的任何法律责任。3.若内容涉及侵权，请联系删除，本人不承担相关责任。4.软件网盘资源均是网络搜集，本软件不负任何责任。使用本软件即视为同意以上条款"}];
+
+const FAV_KEY = "my_favorite_urls";
+function getFavs(){try{return JSON.parse(localStorage.getItem(FAV_KEY))||[]}catch(e){return []}}
+function setFavs(arr){localStorage.setItem(FAV_KEY,JSON.stringify(arr))}
+
+// 收藏逻辑：无弹窗，只变色
+function addToFav(item, btnEl) {
+  const favs = getFavs();
+  const exists = favs.some(f => f.url === item.url);
+  
+  if (exists) {
+    favs = favs.filter(f => f.url !== item.url);
+    btnEl.classList.remove("faved");
+  } else {
+    favs.push({ name: item.name, url: item.url });
+    btnEl.classList.add("faved");
+  }
+  
+  setFavs(favs);
+  renderFavList();
+}
+
+function removeFav(index){
+  const favs = getFavs();favs.splice(index,1);setFavs(favs);renderFavList();
+}
+
+function openUrlUniversal(favItem){
+  const target = urlData.find(u=>u.url===favItem.url)||{url:favItem.url,top:30,bottom:40};
+  openUrl(target);$("#favModal").classList.remove("active");
+}
+
+function renderFavList(){
+  const favs=getFavs(),el=$("#favList");
+  if(!favs.length){el.innerHTML='<div class="no-fav">暂无收藏</div>';return;}
+  el.innerHTML=favs.map((f,i)=>`
+  <div class="fav-item">
+    <div class="fav-name" data-index="${i}">${f.name}</div>
+    <div class="fav-actions"><button class="fav-btn del" data-index="${i}">删除</button></div>
+  </div>`).join("");
+  $$(".fav-name").forEach(n=>n.onclick=()=>openUrlUniversal(favs[n.dataset.index]));
+  $$(".del").forEach(b=>b.onclick=()=>removeFav(b.dataset.index));
+}
+
+let currentAdIndex=0,adInterval=null;const AD_AUTO_PLAY_INTERVAL=4000;
+const READ_NOTICE_KEY="read_notice_ids";
+let selectedTags=[],allTags=[],isOpening=false;
+const $=s=>document.querySelector(s);const $$=s=>document.querySelectorAll(s);
+
+function showLoader(){ $("#loader").style.display="flex"; }
+function hideLoader(){ $("#loader").style.display="none"; }
+
+// 动态无网络页面
+const offlineHtml = `
+<div class="offline-container">
+  <div class="wave"></div>
+  <div class="wave wave2"></div>
+  <div class="offline-icon"><i class="fas fa-wifi"></i></div>
+  <div class="offline-title">网络连接异常</div>
+  <div class="offline-desc">———————————————————————————————⚠️X﹏X⚠️当前处于离线状态⚠️🌗，请查看是否成功连接网络<br>(￣ε(#￣)☆╰╮o(￣皿￣///)</div>
+  <button class="offline-btn" onclick="window.parent.closeViewer()">返回首页</button>
+</div>
+`;
+
+function openUrl(item){
+  if(isOpening)return;
+  isOpening=true;
+  showLoader();
+  const frame=$("#frame");
+
+  if(!navigator.onLine){
+    setTimeout(()=>{
+      frame.srcdoc=offlineHtml;
+      $("#viewer").classList.add("active");
+      hideLoader();
+      isOpening=false;
+    },300);
+    return;
+  }
+
+  frame.onload=()=>{
+    hideLoader();
+    $("#viewer").classList.add("active");
+    isOpening=false;
+  };
+  $("#top-mask").style.height=item.top+"px";
+  $("#bottom-mask").style.height=item.bottom+"px";
+  frame.src=item.url;
+}
+
+function closeViewer(){
+  $("#viewer").classList.remove("active");
+  const frame=$("#frame");frame.onload=null;frame.src="about:blank";
+  hideLoader();isOpening=false;
+}
+
+function updateClock(){
+  const now=new Date();const pad=n=>String(n).padStart(2,"0");
+  $("#clockText").textContent=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+setInterval(updateClock,1000);updateClock();
+
+function switchPage(pageId){
+  $$(".page").forEach(p=>p.classList.remove("active"));$(pageId).classList.add("active");
+  if(pageId==="#noticePage")markAllAsRead();
+  $$(".nav-menu").forEach(m=>m.classList.remove("active"));
+  $$(".nav-toggle i").forEach(i=>i.className="fas fa-bars");
+}
+
+function initNavToggle(toggleId,menuId){
+  $(toggleId).addEventListener("click",()=>{
+    const menu=$(menuId);menu.classList.toggle("active");
+    const icon=$(toggleId).querySelector("i");
+    icon.className=menu.classList.contains("active")?"fas fa-times":"fas fa-bars";
+  });
+}
+
+// 搜索+标签筛选逻辑
+function initSearch(searchId,data,renderFn){
+  $(searchId).addEventListener("input",()=>{
+    filterAndRender();
+  });
+  $(searchId).addEventListener("keypress",e=>{
+    if(e.key==="Enter")filterAndRender();
+  });
+}
+
+// 统一筛选逻辑
+function filterAndRender(){
+  const kw=$("#homeSearchInput").value.trim().toLowerCase();
+  let list=[...urlData];
+  if(selectedTags.length>0){
+    list=list.filter(item=>selectedTags.some(tag=>item.tags.includes(tag)));
+  }
+  if(kw){
+    list=list.filter(item=>
+      item.name.toLowerCase().includes(kw) ||
+      item.tags.some(t=>t.toLowerCase().includes(kw))
+    );
+  }
+  renderUrlCards(list);
+}
+
+function initRipple(){
+  $$(".ripple-btn").forEach(btn=>{
+    btn.addEventListener("click",e=>{
+      const r=document.createElement("span");
+      const rect=btn.getBoundingClientRect();
+      const size=Math.min(rect.width,rect.height);
+      r.style.width=r.style.height=size+"px";
+      r.style.left=e.clientX-rect.left-size/2+"px";
+      r.style.top=e.clientY-rect.top-size/2+"px";
+      r.classList.add("ripple");
+      btn.appendChild(r);
+      setTimeout(()=>r.remove(),800);
+    });
+  });
+}
+
+function initCarousel(){
+  const items=$$("#carouselWrapper .ad-item"),indicators=$("#carouselIndicators");
+  indicators.innerHTML="";items.forEach((_,i)=>{
+    const d=document.createElement("div");
+    d.className="indicator"+(i===0?" active":"");
+    d.addEventListener("click",()=>goToAd(i));
+    indicators.appendChild(d);
+  });
+  goToAd(0);
+  $("#prevBtn").onclick=()=>goToAd(currentAdIndex-1);
+  $("#nextBtn").onclick=()=>goToAd(currentAdIndex+1);
+  adInterval=setInterval(()=>goToAd(currentAdIndex+1),AD_AUTO_PLAY_INTERVAL);
+}
+
+function goToAd(i){
+  const items=$$("#carouselWrapper .ad-item");
+  currentAdIndex=(i+items.length)%items.length;
+  $("#carouselWrapper").style.transform=`translateX(-${currentAdIndex*100}%)`;
+  $$(".indicator").forEach((d,j)=>d.classList.toggle("active",j===currentAdIndex));
+}
+
+function getAllTags(){
+  const s=new Set();urlData.forEach(i=>i.tags.forEach(t=>s.add(t)));
+  allTags=Array.from(s).sort();
+}
+
+// 标签点击
+function renderFilterTags(){
+  const box=$("#filterTags");box.innerHTML="";
+  allTags.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="filter-tag ripple-btn btn-bounce"+(selectedTags.includes(t)?" active":"");
+    b.textContent=t;
+    b.addEventListener("click",()=>{
+      if(selectedTags.includes(t)){
+        selectedTags=selectedTags.filter(x=>x!==t);
+      }else{
+        selectedTags.push(t);
+      }
+      renderFilterTags();
+      filterAndRender();
+    });
+    box.appendChild(b);
+  });
+}
+
+// 卡片渲染 + 收藏状态初始化
+function renderUrlCards(list){
+  const box=$("#urlGrid");
+  box.innerHTML="";
+  if(!list.length){
+    box.innerHTML='<div class="no-notice">暂无相关网址</div>';
+    return;
+  }
+  const favs = getFavs();
+  list.forEach((item,i)=>{
+    const isFav = favs.some(f=>f.url===item.url);
+    const card=document.createElement("div");
+    card.className="url-card ripple-btn btn-bounce fade-in";
+    card.innerHTML=`
+    <div class="card-title">${item.name}</div>
+    <div class="card-tags">${item.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+    <div class="card-bottom">
+      <button class="add-fav ${isFav?'faved':''}" data-index="${i}"><i class="fas fa-star"></i></button>
+      <div class="visit-btn ripple-btn btn-bounce" data-index="${i}">立即访问</div>
+    </div>`;
+    box.appendChild(card);
+  });
+
+  $$(".visit-btn").forEach(btn=>btn.addEventListener("click",()=>openUrl(urlData[btn.dataset.index])));
+  
+  $$(".add-fav").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      addToFav(urlData[btn.dataset.index], btn);
+    });
+  });
+}
+
+function renderNoticeList(list){
+  const box=$("#noticeListContainer");
+  if(!list.length){box.innerHTML='<div class="no-notice">暂无通知</div>';return;}
+  box.innerHTML=list.map(i=>`
+  <div class="notice-item fade-in">
+    <div class="notice-date">${i.date}</div>
+    <div class="notice-text">${i.text}</div>
+  </div>`).join("");
+}
+
+function checkUnread(){
+  try{
+    const read=JSON.parse(localStorage.getItem(READ_NOTICE_KEY))||[];
+    const has=noticeData.some(n=>!read.includes(`${n.date}-${n.text}`));
+    $("#unreadBadge").style.display=has?"inline":"none";
+  }catch(e){}
+}
+
+function markAllAsRead(){
+  try{
+    const read=noticeData.map(n=>`${n.date}-${n.text}`);
+    localStorage.setItem(READ_NOTICE_KEY,JSON.stringify(read));
+    $("#unreadBadge").style.display="none";
+  }catch(e){}
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  initCarousel();getAllTags();renderFilterTags();renderUrlCards(urlData);
+  renderNoticeList(noticeData);checkUnread();initRipple();
+  initNavToggle("#navToggle","#homeNavMenu");
+  initNavToggle("#noticeNavToggle","#noticeNavMenu");
+  initSearch("#homeSearchInput",urlData,renderUrlCards);
+  initSearch("#noticeSearchInput",noticeData,renderNoticeList);
+  renderFavList();
+  $$("[data-page]").forEach(el=>el.addEventListener("click",()=>switchPage("#"+el.dataset.page)));
+  $("#close-view").addEventListener("click",closeViewer);
+  $("#openFavBtn").onclick=()=>{$("#favModal").classList.add("acti
